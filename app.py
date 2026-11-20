@@ -4,6 +4,7 @@ from datetime import datetime
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import requests
 import streamlit as st
 
@@ -87,37 +88,39 @@ for key, value in {
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
-:root{--bg:#080b12;--panel:#101722;--panel2:#121d2b;--line:rgba(160,185,215,.14);--muted:#8293a9;--ink:#edf4fc;--cyan:#65d9e8;--blue:#779cff;--green:#62d6a5;--amber:#f4c56a}
+:root{--bg:#07060f;--panel:#120f22;--panel2:#16132b;--line:rgba(190,170,255,.16);--muted:#9c94b8;--ink:#f3eefc;--cyan:#2dd4bf;--blue:#8b7bff;--violet:#a78bfa;--magenta:#f472b6;--green:#4ade8a;--amber:#f4c56a}
 html,body,[class*="css"]{font-family:'Manrope',sans-serif}
-.stApp{background:radial-gradient(ellipse at 76% -12%,rgba(50,119,163,.18),transparent 38%),radial-gradient(ellipse at 5% 30%,rgba(55,78,125,.13),transparent 30%),var(--bg);color:var(--ink)}
-[data-testid="stHeader"]{background:transparent}[data-testid="stSidebar"]{background:#0b111b;border-right:1px solid var(--line)}[data-testid="stSidebar"] *{color:#dce8f5}
+.stApp{background:radial-gradient(ellipse at 78% -10%,rgba(167,139,250,.22),transparent 40%),radial-gradient(ellipse at 0% 20%,rgba(244,114,182,.14),transparent 34%),radial-gradient(ellipse at 60% 100%,rgba(45,212,191,.12),transparent 38%),var(--bg);color:var(--ink)}
+[data-testid="stHeader"]{background:transparent}[data-testid="stSidebar"]{background:linear-gradient(185deg,#0d0b1c,#0a0815);border-right:1px solid var(--line)}[data-testid="stSidebar"] *{color:#e7defa}
 .block-container{max-width:1540px;padding-top:1.2rem;padding-bottom:3rem}
 h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif!important;color:var(--ink)!important;letter-spacing:-.035em}
-p,label,.stCaption{color:#a8b7c9}
+p,label,.stCaption{color:#b3a8cf}
+@keyframes gradientShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.grad-text{background:linear-gradient(100deg,var(--violet),var(--magenta) 45%,var(--cyan) 85%,var(--violet));background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:gradientShift 6s ease-in-out infinite}
 @keyframes rise{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
 @keyframes glow{0%,100%{box-shadow:0 0 0 rgba(101,217,232,0)}50%{box-shadow:0 0 26px rgba(101,217,232,.09)}}
 @keyframes scanline{0%{transform:translateY(-110%)}100%{transform:translateY(110%)}}
 .nx-top{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:6px 2px 18px;border-bottom:1px solid var(--line);margin-bottom:22px;animation:rise .55s ease both}
-.nx-brand{font:700 16px 'Space Grotesk';letter-spacing:.16em;color:#f2f7ff}.nx-brand span{color:var(--cyan)}
-.nx-status{font:500 10px 'DM Mono';letter-spacing:.14em;color:#8fa2b8;text-transform:uppercase}
-.hero{position:relative;overflow:hidden;border:1px solid rgba(101,217,232,.22);border-radius:20px;padding:28px 30px;background:linear-gradient(115deg,rgba(16,35,48,.96),rgba(17,28,48,.96) 58%,rgba(27,31,55,.96));animation:rise .6s ease both,glow 7s ease-in-out infinite;margin-bottom:20px}
-.hero:after{content:'';position:absolute;top:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.8}
-.kicker{font:500 10px 'DM Mono';letter-spacing:.2em;color:var(--cyan);text-transform:uppercase}.hero h1{font-size:clamp(28px,4vw,43px);margin:10px 0 5px}.hero p{font-size:13px;color:#a9bbce;margin:0;max-width:680px}
-.metric-card{background:linear-gradient(145deg,#121e2c,#0e1621);border:1px solid var(--line);border-radius:15px;padding:15px 17px;animation:rise .55s ease both}
-[data-testid="stMetric"]{background:linear-gradient(145deg,#121e2c,#0e1621);border:1px solid var(--line);border-radius:15px;padding:13px 16px;min-height:105px}
-[data-testid="stMetricLabel"]{color:#8fa2b8!important;font:500 10px 'DM Mono';letter-spacing:.1em}[data-testid="stMetricValue"]{color:#f2f7ff!important;font-family:'Space Grotesk'}
-.section-kicker{font:500 10px 'DM Mono';letter-spacing:.18em;color:#7891aa;text-transform:uppercase;margin:10px 0 8px}
-.source-card{background:linear-gradient(145deg,rgba(18,29,43,.98),rgba(12,19,29,.98));border:1px solid var(--line);border-radius:16px;padding:17px 18px;min-height:148px;animation:rise .5s ease both;transition:all .22s ease}
-.source-card:hover{border-color:rgba(101,217,232,.45);transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.2)}
-.source-icon{font:500 20px 'Space Grotesk';color:var(--cyan);margin-bottom:10px}.source-name{font:600 16px 'Space Grotesk';color:#eff6ff}.source-meta{font:500 9px 'DM Mono';letter-spacing:.13em;color:#7990a8;margin-top:5px}.source-desc{font-size:11px;color:#91a4b9;margin-top:9px;line-height:1.5}
-.source-banner{border:1px solid rgba(101,217,232,.2);background:linear-gradient(100deg,rgba(16,42,54,.75),rgba(19,27,46,.8));border-radius:16px;padding:17px 20px;margin:10px 0 16px}
+.nx-brand{font:700 16px 'Space Grotesk';letter-spacing:.16em;color:#f2f7ff}.nx-brand span{color:var(--magenta)}
+.nx-status{font:500 10px 'DM Mono';letter-spacing:.14em;color:#b3a8cf;text-transform:uppercase}
+.hero{position:relative;overflow:hidden;border:1px solid rgba(167,139,250,.3);border-radius:20px;padding:28px 30px;background:linear-gradient(115deg,rgba(26,18,48,.96),rgba(22,16,42,.96) 58%,rgba(32,20,46,.96));animation:rise .6s ease both,glow 7s ease-in-out infinite;margin-bottom:20px}
+.hero:after{content:'';position:absolute;top:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--violet),var(--magenta),transparent);opacity:.9}
+.kicker{font:500 10px 'DM Mono';letter-spacing:.2em;color:var(--magenta);text-transform:uppercase}.hero h1{font-size:clamp(28px,4vw,43px);margin:10px 0 5px;font-weight:700}.hero p{font-size:13px;color:#c2b8dc;margin:0;max-width:680px}
+.metric-card{background:linear-gradient(145deg,#19142e,#120f22);border:1px solid var(--line);border-radius:15px;padding:15px 17px;animation:rise .55s ease both}
+[data-testid="stMetric"]{background:linear-gradient(145deg,#19142e,#120f22);border:1px solid var(--line);border-radius:15px;padding:13px 16px;min-height:105px}
+[data-testid="stMetricLabel"]{color:#b3a8cf!important;font:500 10px 'DM Mono';letter-spacing:.1em}[data-testid="stMetricValue"]{color:#f2f7ff!important;font-family:'Space Grotesk'}
+.section-kicker{font:500 10px 'DM Mono';letter-spacing:.18em;color:#a399c4;text-transform:uppercase;margin:10px 0 8px}
+.source-card{background:linear-gradient(145deg,rgba(25,20,46,.98),rgba(16,13,30,.98));border:1px solid var(--line);border-radius:16px;padding:17px 18px;min-height:148px;animation:rise .5s ease both;transition:all .22s ease;backdrop-filter:blur(6px)}
+.source-card:hover{border-color:rgba(167,139,250,.55);transform:translateY(-3px);box-shadow:0 14px 32px rgba(0,0,0,.3),0 0 0 1px rgba(244,114,182,.15)}
+.source-icon{font:500 20px 'Space Grotesk';color:var(--magenta);margin-bottom:10px}.source-name{font:600 16px 'Space Grotesk';color:#eff6ff}.source-meta{font:500 9px 'DM Mono';letter-spacing:.13em;color:#a498c2;margin-top:5px}.source-desc{font-size:11px;color:#b0a6cc;margin-top:9px;line-height:1.5}
+.source-banner{border:1px solid rgba(167,139,250,.28);background:linear-gradient(100deg,rgba(32,22,54,.8),rgba(24,17,40,.85));border-radius:16px;padding:17px 20px;margin:10px 0 16px}
 .source-banner-title{font:600 18px 'Space Grotesk';color:#f1f7ff}.source-banner-sub{font:500 10px 'DM Mono';color:var(--cyan);letter-spacing:.13em;margin-top:4px}
-.source-label{font:500 10px 'DM Mono';color:#89a2bb;letter-spacing:.12em;text-transform:uppercase}
-div.stButton>button,div.stDownloadButton>button{border:1px solid rgba(101,217,232,.28);border-radius:10px;background:linear-gradient(105deg,#16465a,#234e78);color:#f2fbff;font-weight:700;min-height:40px;transition:all .2s}
-div.stButton>button:hover,div.stDownloadButton>button:hover{border-color:var(--cyan);transform:translateY(-2px);box-shadow:0 8px 22px rgba(36,143,165,.18);color:white}
+.source-label{font:500 10px 'DM Mono';color:#a399c4;letter-spacing:.12em;text-transform:uppercase}
+div.stButton>button,div.stDownloadButton>button{border:1px solid rgba(167,139,250,.35);border-radius:10px;background:linear-gradient(105deg,#4c2d7a,#7a3570);color:#f8f0ff;font-weight:700;min-height:40px;transition:all .2s}
+div.stButton>button:hover,div.stDownloadButton>button:hover{border-color:var(--magenta);transform:translateY(-2px);box-shadow:0 8px 24px rgba(167,80,200,.3);color:white}
 [data-testid="stDataFrame"]{border:1px solid var(--line);border-radius:12px;overflow:hidden}
-div[data-testid="stExpander"]{border:1px solid var(--line);border-radius:12px;background:rgba(16,25,38,.7)}
-[data-baseweb="select"]>div,[data-testid="stTextInput"] input{background:#101a27;border-color:var(--line);color:#edf4fc}
+div[data-testid="stExpander"]{border:1px solid var(--line);border-radius:12px;background:rgba(22,18,40,.7)}
+[data-baseweb="select"]>div,[data-testid="stTextInput"] input{background:#171226;border-color:var(--line);color:#f3eefc}
 hr{border-color:var(--line)}footer,#MainMenu{visibility:hidden}
 
 /* ================= NEXT-LEVEL ANIMATION LAYER ================= */
@@ -130,9 +133,9 @@ hr{border-color:var(--line)}footer,#MainMenu{visibility:hidden}
 @keyframes sweep{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeScale{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
-.stApp{background-image:radial-gradient(ellipse at 76% -12%,rgba(50,119,163,.18),transparent 38%),radial-gradient(ellipse at 5% 30%,rgba(55,78,125,.13),transparent 30%),linear-gradient(rgba(130,165,210,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(130,165,210,.05) 1px,transparent 1px),var(--bg);background-size:auto,auto,42px 42px,42px 42px;animation:drift 14s linear infinite}
+.stApp{background-image:radial-gradient(ellipse at 78% -10%,rgba(167,139,250,.22),transparent 40%),radial-gradient(ellipse at 0% 20%,rgba(244,114,182,.14),transparent 34%),radial-gradient(ellipse at 60% 100%,rgba(45,212,191,.12),transparent 38%),linear-gradient(rgba(170,150,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(170,150,255,.05) 1px,transparent 1px),var(--bg);background-size:auto,auto,auto,42px 42px,42px 42px;animation:drift 14s linear infinite}
 .hero{isolation:isolate}
-.hero:before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,transparent,rgba(101,217,232,.08),transparent);width:60%;animation:sweep 6s ease-in-out infinite}
+.hero:before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,transparent,rgba(167,139,250,.12),rgba(244,114,182,.1),transparent);width:60%;animation:sweep 6s ease-in-out infinite}
 .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:7px;animation:pulseDot 1.8s ease-in-out infinite;vertical-align:middle}
 .badge{display:inline-flex;align-items:center;gap:6px;font:600 10px 'DM Mono';letter-spacing:.09em;padding:4px 10px;border-radius:999px;text-transform:uppercase;animation:fadeScale .4s ease both}
 .badge-dot{width:7px;height:7px;border-radius:50%}
@@ -144,19 +147,23 @@ hr{border-color:var(--line)}footer,#MainMenu{visibility:hidden}
 .badge-warn .badge-dot{background:var(--amber);animation:pulseAmber 1.8s ease-in-out infinite}
 .badge-idle{background:rgba(160,185,215,.1);color:#9fb2c6;border:1px solid var(--line)}
 .source-card{position:relative}
-.source-card:before{content:'';position:absolute;top:0;left:14px;right:14px;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:0;transition:opacity .25s}
+.source-card:before{content:'';position:absolute;top:0;left:14px;right:14px;height:1px;background:linear-gradient(90deg,transparent,var(--magenta),transparent);opacity:0;transition:opacity .25s}
 .source-card:hover:before{opacity:1}
 .source-card:hover .source-icon{animation:floaty 1.4s ease-in-out infinite}
 [data-testid="stMetric"]{position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s}
-[data-testid="stMetric"]:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.25),0 0 0 1px rgba(101,217,232,.25)}
+[data-testid="stMetric"]:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.3),0 0 0 1px rgba(167,139,250,.3)}
 .nx-counter-wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:4px 0 6px}
-.nx-counter{background:linear-gradient(145deg,#121e2c,#0e1621);border:1px solid var(--line);border-radius:15px;padding:16px 18px;animation:rise .55s ease both;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s}
-.nx-counter:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.25),0 0 0 1px rgba(101,217,232,.25)}
-.nx-counter-label{color:#8fa2b8;font:600 10px 'DM Mono';letter-spacing:.1em;text-transform:uppercase}
+.nx-counter{background:linear-gradient(145deg,#19142e,#120f22);border:1px solid var(--line);border-radius:15px;padding:16px 18px;animation:rise .55s ease both;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s}
+.nx-counter:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.3),0 0 0 1px rgba(167,139,250,.3)}
+.nx-counter-label{color:#b3a8cf;font:600 10px 'DM Mono';letter-spacing:.1em;text-transform:uppercase}
 .nx-counter-value{color:#f2f7ff;font:700 32px 'Space Grotesk';margin-top:6px}
 .nx-spark{position:absolute;right:14px;top:16px;width:9px;height:9px;border-radius:50%;animation:pulseDot 2s ease-in-out infinite}
-.nx-loading-bar{height:2px;width:100%;background:linear-gradient(90deg,transparent,var(--cyan),transparent);background-size:400px 100%;animation:shimmer 1.3s linear infinite;border-radius:2px;margin:2px 0 14px}
-.nx-ring{width:14px;height:14px;border-radius:50%;border:2px solid rgba(101,217,232,.25);border-top-color:var(--cyan);display:inline-block;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
+.nx-loading-bar{height:2px;width:100%;background:linear-gradient(90deg,transparent,var(--violet),var(--magenta),transparent);background-size:400px 100%;animation:shimmer 1.3s linear infinite;border-radius:2px;margin:2px 0 14px}
+.nx-ring{width:14px;height:14px;border-radius:50%;border:2px solid rgba(167,139,250,.25);border-top-color:var(--magenta);display:inline-block;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
+.nx-pagehero{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:18px;padding:18px 22px;margin-bottom:18px;background:linear-gradient(110deg,rgba(28,19,50,.9),rgba(20,15,36,.9));animation:rise .5s ease both}
+.nx-pagehero h2{margin:2px 0 4px!important}
+.nx-chip{display:inline-flex;align-items:center;gap:6px;font:600 10px 'DM Mono';letter-spacing:.08em;padding:4px 11px;border-radius:999px;background:rgba(167,139,250,.14);color:var(--violet);border:1px solid rgba(167,139,250,.35);margin-right:6px}
+.nx-gauge-wrap{display:flex;justify-content:center}
 </style>
 """, unsafe_allow_html=True)
 
@@ -298,11 +305,72 @@ def records_from(payload):
 def site_results(site):
     return [v for (s, _), v in st.session_state.results.items() if s == site]
 
+
+LAT_KEYS = {"lat", "latitude", "lat_deg", "y"}
+LON_KEYS = {"lon", "lng", "long", "longitude", "lon_deg", "x"}
+LABEL_KEYS = ["name", "title", "label", "type", "target", "event", "system", "description"]
+
+
+def geo_points_from_results():
+    """Scan every loaded JSON result for lat/lon-style fields and return one combined DataFrame."""
+    points = []
+    for (site, endpoint), result in st.session_state.results.items():
+        if result.get("type") != "JSON" or result.get("status") != "Online":
+            continue
+        rows = records_from(result["data"])
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            flat = pd.json_normalize(row).iloc[0].to_dict() if any(isinstance(v, dict) for v in row.values()) else row
+            lat = lon = None
+            for k, v in flat.items():
+                lk = str(k).lower()
+                if lat is None and lk in LAT_KEYS:
+                    lat = v
+                if lon is None and lk in LON_KEYS:
+                    lon = v
+            if lat is None or lon is None:
+                continue
+            try:
+                lat_f, lon_f = float(lat), float(lon)
+            except (TypeError, ValueError):
+                continue
+            if not (-90 <= lat_f <= 90 and -180 <= lon_f <= 180):
+                continue
+            label = next((str(flat[k]) for k in LABEL_KEYS if k in flat and flat[k]), endpoint)
+            points.append({"Source": site, "Feed": endpoint, "Label": label, "lat": lat_f, "lon": lon_f})
+    return pd.DataFrame(points)
+
+
+def global_search(query):
+    """Search across every currently loaded JSON dataset at once."""
+    frames = []
+    for (site, endpoint), result in st.session_state.results.items():
+        if result.get("type") != "JSON" or result.get("status") != "Online":
+            continue
+        rows = records_from(result["data"])
+        if not rows:
+            continue
+        try:
+            df = pd.json_normalize(rows)
+        except Exception:
+            continue
+        df.insert(0, "SOURCE", site)
+        df.insert(1, "FEED", endpoint)
+        frames.append(df)
+    if not frames:
+        return pd.DataFrame()
+    combined = pd.concat(frames, ignore_index=True, sort=False)
+    if query:
+        mask = combined.astype(str).apply(lambda col: col.str.contains(query, case=False, na=False)).any(axis=1)
+        combined = combined[mask]
+    return combined
+
 # ----------------------------- SIDEBAR -----------------------------
 with st.sidebar:
     st.markdown("<div style='padding:8px 0 14px'><div class='nx-brand' style='font-size:24px'>◈ NEXUS<span>.</span></div><div class='nx-status'>INTELLIGENCE WORKSPACE / 05</div></div>", unsafe_allow_html=True)
     st.divider()
-    page = st.radio("NAVIGATION", ["Overview", "Source Explorer", "Data Explorer", "Monitor All", "Analytics", "Settings"], label_visibility="visible")
+    page = st.radio("NAVIGATION", ["Overview", "Source Explorer", "Data Explorer", "Global Map", "Global Search", "Monitor All", "Analytics", "Settings"], label_visibility="visible")
     st.divider()
     st.markdown("**QUICK CONTROL**")
     timeout = st.select_slider("Request timeout", options=[5, 10, 15, 18, 25, 30], value=18)
@@ -314,11 +382,15 @@ with st.sidebar:
             progress.progress((i + 1) / len(SOURCES), text=f"Checking {site} · {i + 1}/{len(SOURCES)}")
         progress.empty()
         st.toast("All 7 source checks completed")
-    st.caption("Read-only GET requests · Per-source results · CSV export")
+    st.caption("Read-only requests · Per-source results · CSV export")
+    st.divider()
+    auto_refresh = st.toggle("Auto-refresh every 30s", value=False, help="While enabled, re-scans all sources on a loop. Keep this tab open and awake.")
+    if auto_refresh:
+        st.caption("⟳ Auto-refresh armed — scanning in the background.")
 
 # ----------------------------- HEADER -----------------------------
 st.markdown("<div class='nx-top'><div class='nx-brand'>◈ NEXUS<span>.</span></div><div class='nx-status'><span class='live-dot'></span>MULTI-SOURCE INTELLIGENCE &nbsp; / &nbsp; LIVE WORKSPACE</div></div>", unsafe_allow_html=True)
-st.markdown("<div class='hero'><div class='kicker'>◈ &nbsp; COMMAND CENTER / DATA VISUALIZATION</div><h1>See every source.<br>Understand every signal.</h1><p>Seven configured intelligence websites, clearly separated data feeds, and one unified monitoring workspace.</p></div>", unsafe_allow_html=True)
+st.markdown("<div class='hero'><div class='kicker'>◈ &nbsp; COMMAND CENTER / DATA VISUALIZATION</div><h1 class='grad-text'>See every source.<br>Understand every signal.</h1><p>Seven configured intelligence websites, clearly separated data feeds, geo-mapped events, and one unified monitoring workspace.</p></div>", unsafe_allow_html=True)
 
 # ----------------------------- OVERVIEW -----------------------------
 if page == "Overview":
@@ -327,11 +399,42 @@ if page == "Overview":
     online = sum(r["status"] == "Online" for r in all_results)
     errors = sum(r["status"] != "Online" for r in all_results)
     animated_counters([
-        ("CONFIGURED SOURCES", len(SOURCES), "var(--cyan)"),
+        ("CONFIGURED SOURCES", len(SOURCES), "var(--violet)"),
         ("CHECKS COMPLETED", len(all_results), "var(--blue)"),
         ("ONLINE CHECKS", online, "var(--green)"),
-        ("ERROR / OFFLINE", errors, "#f06e6e"),
+        ("ERROR / OFFLINE", errors, "var(--magenta)"),
     ])
+    gcol, mcol = st.columns([1, 2])
+    with gcol:
+        health_pct = round(100 * online / len(all_results), 1) if all_results else 0
+        gauge = go.Figure(go.Indicator(
+            mode="gauge+number", value=health_pct,
+            number={"suffix": "%", "font": {"color": "#f3eefc", "family": "Space Grotesk"}},
+            gauge={
+                "axis": {"range": [0, 100], "tickcolor": "#b3a8cf"},
+                "bar": {"color": "#a78bfa"},
+                "bgcolor": "rgba(0,0,0,0)",
+                "borderwidth": 0,
+                "steps": [
+                    {"range": [0, 50], "color": "rgba(244,114,182,.25)"},
+                    {"range": [50, 80], "color": "rgba(244,197,106,.25)"},
+                    {"range": [80, 100], "color": "rgba(74,222,138,.25)"},
+                ],
+            },
+            title={"text": "WORKSPACE HEALTH", "font": {"size": 12, "color": "#b3a8cf"}}
+        ))
+        gauge.update_layout(height=220, margin=dict(l=20, r=20, t=40, b=10), paper_bgcolor="rgba(0,0,0,0)", font_color="#f3eefc")
+        st.plotly_chart(gauge, use_container_width=True)
+    with mcol:
+        geo_df = geo_points_from_results()
+        st.markdown(f"<div class='nx-chip'>◉ {len(geo_df)} GEO-TAGGED RECORDS FOUND</div><div class='nx-chip'>Open <b>Global Map</b> to plot them</div>", unsafe_allow_html=True)
+        if not geo_df.empty:
+            mini = px.scatter_geo(geo_df, lat="lat", lon="lon", color="Source", projection="orthographic")
+            mini.update_layout(height=200, margin=dict(l=0, r=0, t=10, b=0), paper_bgcolor="rgba(0,0,0,0)", font_color="#f3eefc",
+                                geo=dict(bgcolor="rgba(0,0,0,0)", landcolor="#1c1733", showocean=True, oceancolor="#0d0b1c", showcountries=True, countrycolor="#3a3159"))
+            st.plotly_chart(mini, use_container_width=True)
+        else:
+            st.info("No geo-tagged records yet — fetch World Watch's missile feed or another geo-tagged source first.")
     st.markdown("<div class='section-kicker'>02 / SELECT A WEBSITE</div>", unsafe_allow_html=True)
     cols = st.columns(2)
     for i, (site, cfg) in enumerate(SOURCES.items()):
@@ -435,6 +538,46 @@ elif page == "Data Explorer":
             st.info("This endpoint returned summary data rather than a list of records.")
             st.json(chosen["data"])
 
+# ----------------------------- GLOBAL MAP -----------------------------
+elif page == "Global Map":
+    st.markdown("<div class='nx-pagehero'><div class='kicker'>◉ WORLD VIEW</div><h2 class='grad-text'>Global Map</h2><p style='color:#b3a8cf;font-size:12px;margin:0'>Every geo-tagged record across every fetched source, plotted together — coordinates are auto-detected from each feed's JSON (lat/lon, latitude/longitude, lat/lng, etc.).</p></div>", unsafe_allow_html=True)
+    geo_df = geo_points_from_results()
+    if geo_df.empty:
+        st.info("No geo-tagged records loaded yet. Go to Source Explorer and fetch World Watch's 'Missiles (with coordinates)' feed — it's the richest geo source currently configured — then come back here.")
+    else:
+        sources_present = sorted(geo_df["Source"].unique())
+        picked = st.multiselect("Filter by source", sources_present, default=sources_present)
+        shown = geo_df[geo_df["Source"].isin(picked)] if picked else geo_df
+        st.caption(f"PLOTTING {len(shown):,} OF {len(geo_df):,} GEO-TAGGED RECORDS")
+        fig = px.scatter_geo(
+            shown, lat="lat", lon="lon", color="Source", hover_name="Label",
+            hover_data={"Feed": True, "lat": ":.3f", "lon": ":.3f"}, projection="natural earth"
+        )
+        fig.update_traces(marker=dict(size=10, line=dict(width=1, color="#0d0b1c"), opacity=0.9))
+        fig.update_layout(
+            height=560, margin=dict(l=0, r=0, t=10, b=0), paper_bgcolor="rgba(0,0,0,0)", font_color="#f3eefc",
+            legend=dict(bgcolor="rgba(0,0,0,0)"),
+            geo=dict(bgcolor="rgba(0,0,0,0)", landcolor="#1c1733", showocean=True, oceancolor="#0d0b1c",
+                      showcountries=True, countrycolor="#3a3159", showcoastlines=True, coastlinecolor="#4b4080")
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        st.dataframe(shown, use_container_width=True, hide_index=True, height=260)
+        st.download_button("Export mapped points as CSV", shown.to_csv(index=False).encode("utf-8"), file_name="nexus_global_map_points.csv", mime="text/csv")
+
+# ----------------------------- GLOBAL SEARCH -----------------------------
+elif page == "Global Search":
+    st.markdown("<div class='nx-pagehero'><div class='kicker'>⌕ CROSS-SOURCE SEARCH</div><h2 class='grad-text'>Global Search</h2><p style='color:#b3a8cf;font-size:12px;margin:0'>Search every loaded JSON dataset from every website at once — each row still shows exactly which source and feed it came from.</p></div>", unsafe_allow_html=True)
+    query = st.text_input("Search across all loaded sources", placeholder="e.g. a coin symbol, a vessel name, a country, a status...")
+    combined = global_search(query)
+    if combined.empty and query:
+        st.warning("No matching records found across any currently loaded source.")
+    elif combined.empty:
+        st.info("No JSON datasets are loaded yet. Fetch a few feeds first, then search across all of them here.")
+    else:
+        st.caption(f"SHOWING {len(combined):,} MATCHING ROWS ACROSS {combined['SOURCE'].nunique()} SOURCE(S)")
+        st.dataframe(combined, use_container_width=True, hide_index=True, height=440)
+        st.download_button("Export search results as CSV", combined.to_csv(index=False).encode("utf-8"), file_name="nexus_global_search.csv", mime="text/csv")
+
 # ----------------------------- MONITOR ALL -----------------------------
 elif page == "Monitor All":
     st.markdown("<div class='section-kicker'>01 / MONITOR ALL — RESULTS GROUPED BY WEBSITE</div>", unsafe_allow_html=True)
@@ -506,4 +649,13 @@ elif page == "Settings":
         st.session_state.last_scan = None
         st.rerun()
 
-st.markdown("<div style='text-align:center;padding:34px 0 8px;color:#60768c;font:10px DM Mono;letter-spacing:.16em'>NEXUS INTELLIGENCE WORKSPACE &nbsp; · &nbsp; SOURCE-ATTRIBUTED DATA &nbsp; · &nbsp; PYTHON / STREAMLIT</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align:center;padding:34px 0 8px;color:#746a94;font:10px DM Mono;letter-spacing:.16em'>NEXUS INTELLIGENCE WORKSPACE &nbsp; · &nbsp; SOURCE-ATTRIBUTED DATA &nbsp; · &nbsp; PYTHON / STREAMLIT</div>", unsafe_allow_html=True)
+
+# ----------------------------- AUTO-REFRESH LOOP -----------------------------
+if auto_refresh:
+    with st.spinner("Auto-refresh: re-scanning all sources..."):
+        for site, config in SOURCES.items():
+            endpoint = next(iter(config["endpoints"]))
+            save_result(site, endpoint, timeout)
+    time.sleep(30)
+    st.rerun()
