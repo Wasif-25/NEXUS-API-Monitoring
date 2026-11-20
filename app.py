@@ -29,13 +29,15 @@ SOURCES = {
     },
     "Hormuz Strait Monitor": {
         "url": "https://hormuzstraitmonitor.com/", "icon": "⌁", "category": "MARITIME",
-        "kind": "Website check", "description": "Maritime-monitoring website. NEXUS currently checks the website response rather than claiming access to its internal dashboard data.",
-        "endpoints": {"Website availability": "https://hormuzstraitmonitor.com/"}, "refresh": "Manual check"
+        "kind": "Public JSON API", "description": "Confirmed via browser Network tab: the site's own dashboard pulls from a public /api/dashboard endpoint — real maritime monitoring data, not just a page availability check.",
+        "endpoints": {"Dashboard feed": "https://hormuzstraitmonitor.com/api/dashboard"},
+        "refresh": "Poll periodically; matches the site's own dashboard refresh"
     },
     "Monitor the Situation": {
         "url": "https://monitor-the-situation.com/", "icon": "◎", "category": "OSINT",
-        "kind": "Website check", "description": "Crisis and situation-monitoring website. A documented public data API has not been verified for this integration.",
-        "endpoints": {"Website availability": "https://monitor-the-situation.com/"}, "refresh": "Manual check"
+        "kind": "Public JSON API", "description": "Confirmed via browser Network tab: a clean public REST endpoint serves this site's live event data.",
+        "endpoints": {"Live events": "https://monitor-the-situation.com/api/events"},
+        "refresh": "Poll periodically for new events"
     },
     "Watchboard": {
         "url": "https://watchboard.dev/", "icon": "▤", "category": "TRACKING",
@@ -66,8 +68,11 @@ SOURCES = {
     },
     "World Watch": {
         "url": "https://worldwatch.uk/", "icon": "◉", "category": "WORLD INTELLIGENCE",
-        "kind": "Website check", "description": "Website availability check. A documented public JSON API has not been verified.",
-        "endpoints": {"Website availability": "https://worldwatch.uk/"}, "refresh": "Manual check"
+        "kind": "Public JSON API", "description": "World Watch serves several of its map data layers as plain static JSON files. Confirmed via browser Network tab: missiles_with_coords.json returns live JSON directly (no auth, no API key).",
+        "endpoints": {
+            "Missiles (with coordinates)": "https://worldwatch.uk/missiles_with_coords.json",
+            "Key events (unverified path)": "https://worldwatch.uk/key_events_proxy.php"
+        }, "refresh": "Poll periodically; layer data updates on the source's own schedule"
     }
 }
 
