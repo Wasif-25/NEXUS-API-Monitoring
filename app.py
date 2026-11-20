@@ -20,8 +20,12 @@ HEADERS = {
 SOURCES = {
     "Glint Trade Terminal": {
         "url": "https://glint.trade/terminal", "icon": "◈", "category": "MARKETS",
-        "kind": "Website check", "description": "Trading and intelligence terminal. This connection checks website availability; a public data API has not been verified.",
-        "endpoints": {"Website availability": "https://glint.trade/terminal"}, "refresh": "Manual check"
+        "kind": "Public JSON API", "description": "Glint's terminal is built on the Hyperliquid exchange API. Live mid prices, perpetuals metadata, and asset contexts (funding, open interest, mark price) are pulled directly from Hyperliquid's public endpoint.",
+        "endpoints": {
+            "All mid prices": ("POST", "https://api.hyperliquid.xyz/info", {"type": "allMids"}),
+            "Perpetuals metadata": ("POST", "https://api.hyperliquid.xyz/info", {"type": "meta"}),
+            "Asset contexts (funding / OI / mark price)": ("POST", "https://api.hyperliquid.xyz/info", {"type": "metaAndAssetCtxs"})
+        }, "refresh": "Poll every few seconds for live prices"
     },
     "Hormuz Strait Monitor": {
         "url": "https://hormuzstraitmonitor.com/", "icon": "⌁", "category": "MARITIME",
@@ -110,8 +114,84 @@ div.stButton>button:hover,div.stDownloadButton>button:hover{border-color:var(--c
 div[data-testid="stExpander"]{border:1px solid var(--line);border-radius:12px;background:rgba(16,25,38,.7)}
 [data-baseweb="select"]>div,[data-testid="stTextInput"] input{background:#101a27;border-color:var(--line);color:#edf4fc}
 hr{border-color:var(--line)}footer,#MainMenu{visibility:hidden}
+
+/* ================= NEXT-LEVEL ANIMATION LAYER ================= */
+@keyframes drift{0%{background-position:0 0,0 0}100%{background-position:120px 120px,-90px 70px}}
+@keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(98,214,165,.55)}50%{box-shadow:0 0 0 7px rgba(98,214,165,0)}}
+@keyframes pulseRed{0%,100%{box-shadow:0 0 0 0 rgba(240,110,110,.55)}50%{box-shadow:0 0 0 7px rgba(240,110,110,0)}}
+@keyframes pulseAmber{0%,100%{box-shadow:0 0 0 0 rgba(244,197,106,.55)}50%{box-shadow:0 0 0 7px rgba(244,197,106,0)}}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes sweep{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeScale{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.stApp{background-image:radial-gradient(ellipse at 76% -12%,rgba(50,119,163,.18),transparent 38%),radial-gradient(ellipse at 5% 30%,rgba(55,78,125,.13),transparent 30%),linear-gradient(rgba(130,165,210,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(130,165,210,.05) 1px,transparent 1px),var(--bg);background-size:auto,auto,42px 42px,42px 42px;animation:drift 14s linear infinite}
+.hero{isolation:isolate}
+.hero:before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,transparent,rgba(101,217,232,.08),transparent);width:60%;animation:sweep 6s ease-in-out infinite}
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:7px;animation:pulseDot 1.8s ease-in-out infinite;vertical-align:middle}
+.badge{display:inline-flex;align-items:center;gap:6px;font:600 10px 'DM Mono';letter-spacing:.09em;padding:4px 10px;border-radius:999px;text-transform:uppercase;animation:fadeScale .4s ease both}
+.badge-dot{width:7px;height:7px;border-radius:50%}
+.badge-online{background:rgba(98,214,165,.12);color:var(--green);border:1px solid rgba(98,214,165,.35)}
+.badge-online .badge-dot{background:var(--green);animation:pulseDot 1.8s ease-in-out infinite}
+.badge-offline{background:rgba(240,110,110,.12);color:#f3a0a0;border:1px solid rgba(240,110,110,.35)}
+.badge-offline .badge-dot{background:#f06e6e;animation:pulseRed 1.8s ease-in-out infinite}
+.badge-warn{background:rgba(244,197,106,.12);color:var(--amber);border:1px solid rgba(244,197,106,.35)}
+.badge-warn .badge-dot{background:var(--amber);animation:pulseAmber 1.8s ease-in-out infinite}
+.badge-idle{background:rgba(160,185,215,.1);color:#9fb2c6;border:1px solid var(--line)}
+.source-card{position:relative}
+.source-card:before{content:'';position:absolute;top:0;left:14px;right:14px;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:0;transition:opacity .25s}
+.source-card:hover:before{opacity:1}
+.source-card:hover .source-icon{animation:floaty 1.4s ease-in-out infinite}
+[data-testid="stMetric"]{position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s}
+[data-testid="stMetric"]:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.25),0 0 0 1px rgba(101,217,232,.25)}
+.nx-counter-wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:4px 0 6px}
+.nx-counter{background:linear-gradient(145deg,#121e2c,#0e1621);border:1px solid var(--line);border-radius:15px;padding:16px 18px;animation:rise .55s ease both;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s}
+.nx-counter:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.25),0 0 0 1px rgba(101,217,232,.25)}
+.nx-counter-label{color:#8fa2b8;font:600 10px 'DM Mono';letter-spacing:.1em;text-transform:uppercase}
+.nx-counter-value{color:#f2f7ff;font:700 32px 'Space Grotesk';margin-top:6px}
+.nx-spark{position:absolute;right:14px;top:16px;width:9px;height:9px;border-radius:50%;animation:pulseDot 2s ease-in-out infinite}
+.nx-loading-bar{height:2px;width:100%;background:linear-gradient(90deg,transparent,var(--cyan),transparent);background-size:400px 100%;animation:shimmer 1.3s linear infinite;border-radius:2px;margin:2px 0 14px}
+.nx-ring{width:14px;height:14px;border-radius:50%;border:2px solid rgba(101,217,232,.25);border-top-color:var(--cyan);display:inline-block;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
 </style>
 """, unsafe_allow_html=True)
+
+def status_badge(status):
+    s = (status or "").lower()
+    cls = "badge-idle"
+    if s == "online":
+        cls = "badge-online"
+    elif s in ("offline", "http error", "failed"):
+        cls = "badge-offline"
+    elif s in ("html/text", "unavailable"):
+        cls = "badge-warn"
+    return f"<span class='badge {cls}'><span class='badge-dot'></span>{status.upper()}</span>"
+
+
+def animated_counters(items):
+    """items: list of (label, value, color) -> renders an animated count-up metric row via a single JS component."""
+    cards_html = "".join(
+        f"""<div class="nx-counter"><div class="nx-spark" style="background:{color}"></div>
+        <div class="nx-counter-label">{label}</div>
+        <div class="nx-counter-value" data-target="{value}">0</div></div>"""
+        for label, value, color in items
+    )
+    html = f"""
+    <div class="nx-counter-wrap">{cards_html}</div>
+    <script>
+    const vals = document.querySelectorAll('.nx-counter-value');
+    vals.forEach(el => {{
+        const target = parseInt(el.getAttribute('data-target')) || 0;
+        let cur = 0;
+        const step = Math.max(1, Math.ceil(target / 36));
+        const timer = setInterval(() => {{
+            cur += step;
+            if (cur >= target) {{ cur = target; clearInterval(timer); }}
+            el.textContent = cur.toLocaleString();
+        }}, 16);
+    }});
+    </script>
+    """
+    st.components.v1.html(html, height=120)
 
 # ----------------------------- DATA ENGINE -----------------------------
 def count_records(payload):
@@ -153,9 +233,42 @@ def fetch_endpoint(site, endpoint, url, timeout=18):
         }
 
 
+def fetch_post_endpoint(site, endpoint, url, payload, timeout=18):
+    started = time.perf_counter()
+    checked = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        response = requests.post(url, headers={**HEADERS, "Content-Type": "application/json"}, json=payload, timeout=timeout)
+        elapsed = round((time.perf_counter() - started) * 1000, 1)
+        try:
+            data = response.json()
+            data_type = "JSON"
+        except ValueError:
+            data = response.text[:10000]
+            data_type = "HTML/Text"
+        return {
+            "website": site, "endpoint": endpoint, "url": url,
+            "status": "Online" if response.ok else "HTTP Error", "http": response.status_code,
+            "ms": elapsed, "records": count_records(data), "type": data_type,
+            "checked": checked, "content_type": response.headers.get("Content-Type", ""),
+            "data": data, "error": None
+        }
+    except requests.exceptions.RequestException as exc:
+        return {
+            "website": site, "endpoint": endpoint, "url": url, "status": "Offline",
+            "http": "Failed", "ms": round((time.perf_counter() - started) * 1000, 1),
+            "records": 0, "type": "Unavailable", "checked": checked,
+            "content_type": "", "data": None, "error": str(exc)
+        }
+
+
 def save_result(site, endpoint, timeout=18):
-    url = SOURCES[site]["endpoints"][endpoint]
-    result = fetch_endpoint(site, endpoint, url, timeout)
+    entry = SOURCES[site]["endpoints"][endpoint]
+    if isinstance(entry, tuple):
+        _, url, payload = entry
+        result = fetch_post_endpoint(site, endpoint, url, payload, timeout)
+    else:
+        url = entry
+        result = fetch_endpoint(site, endpoint, url, timeout)
     st.session_state.results[(site, endpoint)] = result
     st.session_state.history.append({
         "Website": site, "Endpoint": endpoint, "Checked": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -199,7 +312,7 @@ with st.sidebar:
     st.caption("Read-only GET requests · Per-source results · CSV export")
 
 # ----------------------------- HEADER -----------------------------
-st.markdown("<div class='nx-top'><div class='nx-brand'>◈ NEXUS<span>.</span></div><div class='nx-status'>MULTI-SOURCE INTELLIGENCE &nbsp; / &nbsp; LIVE WORKSPACE</div></div>", unsafe_allow_html=True)
+st.markdown("<div class='nx-top'><div class='nx-brand'>◈ NEXUS<span>.</span></div><div class='nx-status'><span class='live-dot'></span>MULTI-SOURCE INTELLIGENCE &nbsp; / &nbsp; LIVE WORKSPACE</div></div>", unsafe_allow_html=True)
 st.markdown("<div class='hero'><div class='kicker'>◈ &nbsp; COMMAND CENTER / DATA VISUALIZATION</div><h1>See every source.<br>Understand every signal.</h1><p>Seven configured intelligence websites, clearly separated data feeds, and one unified monitoring workspace.</p></div>", unsafe_allow_html=True)
 
 # ----------------------------- OVERVIEW -----------------------------
@@ -208,18 +321,19 @@ if page == "Overview":
     all_results = list(st.session_state.results.values())
     online = sum(r["status"] == "Online" for r in all_results)
     errors = sum(r["status"] != "Online" for r in all_results)
-    a, b, c, d = st.columns(4)
-    a.metric("CONFIGURED SOURCES", len(SOURCES))
-    b.metric("CHECKS COMPLETED", len(all_results))
-    c.metric("ONLINE CHECKS", online)
-    d.metric("ERROR / OFFLINE", errors)
+    animated_counters([
+        ("CONFIGURED SOURCES", len(SOURCES), "var(--cyan)"),
+        ("CHECKS COMPLETED", len(all_results), "var(--blue)"),
+        ("ONLINE CHECKS", online, "var(--green)"),
+        ("ERROR / OFFLINE", errors, "#f06e6e"),
+    ])
     st.markdown("<div class='section-kicker'>02 / SELECT A WEBSITE</div>", unsafe_allow_html=True)
     cols = st.columns(2)
     for i, (site, cfg) in enumerate(SOURCES.items()):
         results = site_results(site)
         status = results[-1]["status"] if results else "NOT CHECKED"
         with cols[i % 2]:
-            st.markdown(f"<div class='source-card'><div class='source-icon'>{cfg['icon']}</div><div class='source-name'>{site}</div><div class='source-meta'>{cfg['category']} &nbsp; / &nbsp; {status.upper()}</div><div class='source-desc'>{cfg['kind']} · {cfg['description']}</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='source-card'><div class='source-icon'>{cfg['icon']}</div><div class='source-name'>{site}</div><div class='source-meta'>{cfg['category']}</div><div style='margin-top:8px'>{status_badge(status)}</div><div class='source-desc'>{cfg['kind']} · {cfg['description']}</div></div>", unsafe_allow_html=True)
             if st.button(f"Open {site}", key=f"open_{i}", use_container_width=True):
                 st.session_state.selected_source = site
                 st.rerun()
@@ -243,15 +357,22 @@ elif page == "Source Explorer":
     old_endpoint = st.session_state.selected_endpoint.get(site, endpoints[0])
     endpoint = st.selectbox("Choose a feed or check", endpoints, index=endpoints.index(old_endpoint) if old_endpoint in endpoints else 0)
     st.session_state.selected_endpoint[site] = endpoint
-    st.code(cfg["endpoints"][endpoint], language="text")
+    entry = cfg["endpoints"][endpoint]
+    if isinstance(entry, tuple):
+        method, ep_url, payload = entry
+        st.code(f"{method} {ep_url}\nBody: {json.dumps(payload)}", language="text")
+    else:
+        st.code(f"GET {entry}", language="text")
     st.caption(f"Refresh guidance: {cfg['refresh']}")
     if st.button(f"↻ FETCH DATA FROM {site.upper()}", type="primary", use_container_width=True):
+        st.markdown("<div class='nx-loading-bar'></div>", unsafe_allow_html=True)
         with st.spinner(f"Fetching only {site} · {endpoint}..."):
             save_result(site, endpoint, timeout)
         st.rerun()
     current = st.session_state.results.get((site, endpoint))
     if current:
         st.markdown(f"<div class='section-kicker'>LATEST RESULT / SOURCE: {site.upper()} / FEED: {endpoint.upper()}</div>", unsafe_allow_html=True)
+        st.markdown(status_badge(current["status"]), unsafe_allow_html=True)
         x, y, z, q = st.columns(4)
         x.metric("SOURCE STATUS", current["status"])
         y.metric("HTTP CODE", current["http"])
@@ -321,7 +442,7 @@ elif page == "Monitor All":
             if not items:
                 continue
             latest = items[-1]
-            st.markdown(f"<div class='source-banner'><div class='source-banner-title'>{cfg['icon']} &nbsp; {site}</div><div class='source-banner-sub'>{cfg['category']} &nbsp; / &nbsp; {latest['status'].upper()} &nbsp; / &nbsp; {len(items)} CHECK(S)</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='source-banner'><div class='source-banner-title'>{cfg['icon']} &nbsp; {site} &nbsp; {status_badge(latest['status'])}</div><div class='source-banner-sub'>{cfg['category']} &nbsp; / &nbsp; {len(items)} CHECK(S)</div></div>", unsafe_allow_html=True)
             for r in items:
                 with st.expander(f"{r['endpoint']}  ·  {r['status']}  ·  {r['ms']} ms", expanded=True):
                     st.caption(f"OWNER: {r['website']}  |  FEED: {r['endpoint']}  |  URL: {r['url']}")
@@ -366,9 +487,13 @@ elif page == "Settings":
             st.write(cfg["description"])
             st.write("Website:", cfg["url"])
             st.write("Refresh guidance:", cfg["refresh"])
-            for label, url in cfg["endpoints"].items():
+            for label, entry in cfg["endpoints"].items():
                 st.write(label)
-                st.code(url)
+                if isinstance(entry, tuple):
+                    method, ep_url, payload = entry
+                    st.code(f"{method} {ep_url}\nBody: {json.dumps(payload)}")
+                else:
+                    st.code(f"GET {entry}")
     st.warning("A website availability check is not the same as an API data integration. NEXUS only displays internal data when a documented, accessible data endpoint is configured.")
     if st.button("Clear all results and history", type="secondary"):
         st.session_state.results = {}
