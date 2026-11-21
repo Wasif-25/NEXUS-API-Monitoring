@@ -1,4 +1,5 @@
 import json
+import math
 import time
 from datetime import datetime
 
@@ -397,22 +398,126 @@ def global_search(query):
         combined = combined[mask]
     return combined
 
+
+def _node_style(status):
+    s = (status or "").lower()
+    if s == "online":
+        return "#4ade8a", "pg"
+    if s in ("offline", "http error", "failed"):
+        return "#f06e6e", "pr"
+    if s in ("html/text", "unavailable"):
+        return "#f4c56a", "pa"
+    return "#6c6490", ""
+
+
+def network_graph():
+    """Renders an animated radial SVG: NEXUS core connected to every configured source, color-coded live."""
+    sites = list(SOURCES.keys())
+    n = len(sites)
+    cx, cy, radius = 300, 300, 215
+    lines_svg, nodes_svg = "", ""
+    for i, site in enumerate(sites):
+        angle = (2 * math.pi * i / n) - math.pi / 2
+        x, y = cx + radius * math.cos(angle), cy + radius * math.sin(angle)
+        latest = site_results(site)
+        status = latest[-1]["status"] if latest else "idle"
+        color, anim = _node_style(status)
+        icon = SOURCES[site]["icon"]
+        label = site if len(site) <= 16 else site[:14] + "…"
+        lines_svg += f'<line x1="{cx}" y1="{cy}" x2="{x:.1f}" y2="{y:.1f}" stroke="{color}" stroke-width="1.6" stroke-dasharray="4 6" opacity="0.55" class="nx-flow" style="animation-delay:{i * 0.12:.2f}s"/>'
+        nodes_svg += (
+            f'<g><circle cx="{x:.1f}" cy="{y:.1f}" r="27" fill="#161129" stroke="{color}" stroke-width="2.4" class="{anim}"/>'
+            f'<text x="{x:.1f}" y="{y + 7:.1f}" text-anchor="middle" font-size="19" fill="{color}">{icon}</text>'
+            f'<text x="{x:.1f}" y="{y + 46:.1f}" text-anchor="middle" font-size="9.5" fill="#cfc6ea" font-family="DM Mono, monospace">{label}</text></g>'
+        )
+    svg = f"""
+    <svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-height:600px">
+      <defs><radialGradient id="coreGrad" cx="50%" cy="50%" r="60%">
+        <stop offset="0%" stop-color="#8b4fa0"/><stop offset="100%" stop-color="#241a3f"/>
+      </radialGradient></defs>
+      {lines_svg}
+      <circle cx="{cx}" cy="{cy}" r="48" fill="url(#coreGrad)" stroke="#a78bfa" stroke-width="2"/>
+      <text x="{cx}" y="{cy + 2}" text-anchor="middle" font-size="19" fill="#fff" font-family="Space Grotesk, sans-serif" font-weight="700">NEXUS</text>
+      <text x="{cx}" y="{cy + 18}" text-anchor="middle" font-size="8.5" fill="#d9c9ff" font-family="DM Mono, monospace" letter-spacing="1.5">{n} SOURCES</text>
+      {nodes_svg}
+      <style>
+        .nx-flow{{animation:dashmove 2.4s linear infinite}}
+        @keyframes dashmove{{to{{stroke-dashoffset:-20}}}}
+        .pg{{animation:pg 1.8s ease-in-out infinite}} @keyframes pg{{0%,100%{{filter:drop-shadow(0 0 0px #4ade8a)}}50%{{filter:drop-shadow(0 0 10px #4ade8a)}}}}
+        .pr{{animation:pr 1.8s ease-in-out infinite}} @keyframes pr{{0%,100%{{filter:drop-shadow(0 0 0px #f06e6e)}}50%{{filter:drop-shadow(0 0 10px #f06e6e)}}}}
+        .pa{{animation:pa 1.8s ease-in-out infinite}} @keyframes pa{{0%,100%{{filter:drop-shadow(0 0 0px #f4c56a)}}50%{{filter:drop-shadow(0 0 10px #f4c56a)}}}}
+      </style>
+    </svg>"""
+    st.components.v1.html(svg, height=600)
+
+
+def generate_insights():
+    """Reads whatever JSON is currently loaded and writes plain-English highlights, per source."""
+    res = st.session_state.results
+
+    def latest(site, feed_substr=None):
+        for (s, e), v in res.items():
+            if s == site and v.get("type") == "JSON" and v.get("status") == "Online":
+                if feed_substr is None or feed_substr.lower() in e.lower():
+                    return v
+        return None
+
+    insights = []
+
+    sb = latest("ShadowBroker")
+    if sb:
+        quakes = [f for f in records_from(sb["data"]) if isinstance(f, dict) and isinstance(f.get("properties"), dict)]
+        if quakes:
+            biggest = max(quakes, key=lambda f: f["properties"].get("mag") or -999)
+            mag, place = biggest["properties"].get("mag"), biggest["properties"].get("place", "an unspecified location")
+            insights.append(("⟁", "ShadowBroker", f"Largest quake in the last 24h: **M{mag}** near {place} — {len(quakes)} events total."))
+
+    ww = latest("World Watch", "Missile")
+    if ww:
+        insights.append(("◉", "World Watch", f"{len(records_from(ww['data']))} missile/coordinate records currently tracked."))
+
+    mts = latest("Monitor the Situation")
+    if mts:
+        insights.append(("◎", "Monitor the Situation", f"{len(records_from(mts['data']))} live events currently on the board."))
+
+    glint = latest("Glint Trade Terminal", "mid")
+    if glint and isinstance(glint["data"], dict):
+        parts = [f"{sym} ${float(glint['data'][sym]):,.2f}" for sym in ("BTC", "ETH") if sym in glint["data"]]
+        if parts:
+            insights.append(("◈", "Glint Trade Terminal", "Live Hyperliquid mids — " + " · ".join(parts) + "."))
+
+    wb = latest("Watchboard", "breaking")
+    if wb:
+        insights.append(("▤", "Watchboard", f"{len(records_from(wb['data']))} breaking-news items in the current feed."))
+
+    hz = latest("Hormuz Strait Monitor")
+    if hz and isinstance(hz["data"], dict):
+        insights.append(("⌁", "Hormuz Strait Monitor", f"Dashboard feed loaded — {len(hz['data'])} top-level data fields available."))
+
+    sd = latest("Sitdeck", "data-sources")
+    if sd:
+        insights.append(("▦", "Sitdeck", f"{len(records_from(sd['data']))} data-source records returned."))
+
+    if not insights:
+        insights.append(("◈", "NEXUS", "No live data loaded yet — fetch a few sources (or hit Monitor All) to generate signals here automatically."))
+    return insights
+
 # ----------------------------- SIDEBAR -----------------------------
 with st.sidebar:
     st.markdown("<div style='padding:8px 0 14px'><div class='nx-brand' style='font-size:24px'>◈ NEXUS<span>.</span></div><div class='nx-status'>INTELLIGENCE WORKSPACE / 05</div></div>", unsafe_allow_html=True)
     st.divider()
-    page = st.radio("NAVIGATION", ["Overview", "Source Explorer", "Data Explorer", "Global Map", "Global Search", "Monitor All", "Analytics", "Settings"], label_visibility="visible")
+    page = st.radio("NAVIGATION", ["Overview", "Network Graph", "Source Explorer", "Data Explorer", "Global Map", "Global Search", "Monitor All", "Analytics", "Settings"], label_visibility="visible")
     st.divider()
     st.markdown("**QUICK CONTROL**")
     timeout = st.select_slider("Request timeout", options=[5, 10, 15, 18, 25, 30], value=18)
-    if st.button("↯  MONITOR ALL 7 SOURCES", use_container_width=True):
+    if st.button(f"↯  MONITOR ALL {len(SOURCES)} SOURCES", use_container_width=True):
         progress = st.progress(0, text="Starting source checks...")
         for i, (site, config) in enumerate(SOURCES.items()):
             endpoint = next(iter(config["endpoints"]))
             save_result(site, endpoint, timeout)
             progress.progress((i + 1) / len(SOURCES), text=f"Checking {site} · {i + 1}/{len(SOURCES)}")
         progress.empty()
-        st.toast("All 7 source checks completed")
+        st.toast(f"All {len(SOURCES)} source checks completed")
     st.caption("Read-only requests · Per-source results · CSV export")
     st.divider()
     auto_refresh = st.toggle("Auto-refresh every 30s", value=False, help="While enabled, re-scans all sources on a loop. Keep this tab open and awake.")
@@ -421,7 +526,7 @@ with st.sidebar:
 
 # ----------------------------- HEADER -----------------------------
 st.markdown("<div class='nx-top'><div class='nx-brand'>◈ NEXUS<span>.</span></div><div class='nx-status'><span class='live-dot'></span>MULTI-SOURCE INTELLIGENCE &nbsp; / &nbsp; LIVE WORKSPACE</div></div>", unsafe_allow_html=True)
-st.markdown("<div class='hero'><div class='kicker'>◈ &nbsp; COMMAND CENTER / DATA VISUALIZATION</div><h1 class='grad-text'>See every source.<br>Understand every signal.</h1><p>Seven configured intelligence websites, clearly separated data feeds, geo-mapped events, and one unified monitoring workspace.</p></div>", unsafe_allow_html=True)
+st.markdown(f"<div class='hero'><div class='kicker'>◈ &nbsp; COMMAND CENTER / DATA VISUALIZATION</div><h1 class='grad-text'>See every source.<br>Understand every signal.</h1><p>{len(SOURCES)} configured intelligence websites, clearly separated data feeds, geo-mapped events, and one unified monitoring workspace.</p></div>", unsafe_allow_html=True)
 
 # ----------------------------- OVERVIEW -----------------------------
 if page == "Overview":
@@ -466,6 +571,9 @@ if page == "Overview":
             st.plotly_chart(mini, use_container_width=True)
         else:
             st.info("No geo-tagged records yet — fetch World Watch's missile feed or another geo-tagged source first.")
+    st.markdown("<div class='section-kicker'>⚡ INTELLIGENCE SIGNALS — AUTO-GENERATED FROM LOADED DATA</div>", unsafe_allow_html=True)
+    for icon, owner, text in generate_insights():
+        st.markdown(f"<div class='source-banner' style='padding:13px 18px;margin:8px 0'><span style='font-size:16px;margin-right:10px'>{icon}</span><b style='color:#f1f7ff'>{owner}</b> &nbsp;·&nbsp; <span style='color:#cfc6ea;font-size:13px'>{text}</span></div>", unsafe_allow_html=True)
     st.markdown("<div class='section-kicker'>02 / SELECT A WEBSITE</div>", unsafe_allow_html=True)
     cols = st.columns(2)
     for i, (site, cfg) in enumerate(SOURCES.items()):
@@ -482,6 +590,17 @@ if page == "Overview":
         st.dataframe(pd.DataFrame(recent), use_container_width=True, hide_index=True)
     else:
         st.info("No source has been checked yet. Use MONITOR ALL or open an individual website card.")
+
+# ----------------------------- NETWORK GRAPH -----------------------------
+elif page == "Network Graph":
+    st.markdown("<div class='nx-pagehero'><div class='kicker'>⟁ LIVE TOPOLOGY</div><h2 class='grad-text'>Network Graph</h2><p style='color:#b3a8cf;font-size:12px;margin:0'>Every configured source, radiating from NEXUS, color-coded by its most recent check — green pulses mean online, red means offline/error, amber means a website-only response, grey means not checked yet.</p></div>", unsafe_allow_html=True)
+    network_graph()
+    legend_cols = st.columns(4)
+    legend_cols[0].markdown(status_badge("Online"), unsafe_allow_html=True)
+    legend_cols[1].markdown(status_badge("Offline"), unsafe_allow_html=True)
+    legend_cols[2].markdown(status_badge("HTML/Text"), unsafe_allow_html=True)
+    legend_cols[3].markdown(status_badge("Not checked"), unsafe_allow_html=True)
+    st.caption("Run MONITOR ALL in the sidebar to light up every node at once, or fetch sources individually from Source Explorer.")
 
 # ----------------------------- SOURCE EXPLORER -----------------------------
 elif page == "Source Explorer":
