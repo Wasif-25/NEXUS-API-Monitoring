@@ -67,6 +67,24 @@ SOURCES = {
         "endpoints": {"Public product catalogue": "https://www.worldmonitor.app/api/product-catalog"},
         "refresh": "Manual; protected feeds need credentials"
     },
+    "ShadowBroker": {
+        "url": "https://shadowbroker.dev/", "icon": "⟁", "category": "OSINT / THREAT INTEL",
+        "kind": "Public JSON API", "description": "Confirmed via browser Network tab: one of this site's data layers calls the official USGS Earthquake Hazards Program feed directly — a fully public, documented government API (magnitude 2.5+ earthquakes from the last 24 hours, GeoJSON, no auth required).",
+        "endpoints": {"Earthquakes M2.5+ (last 24h)": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson"},
+        "refresh": "USGS updates this feed roughly every 5 minutes"
+    },
+    "Sitdeck": {
+        "url": "https://sitdeck.com/", "icon": "▦", "category": "DASHBOARD / SAAS",
+        "kind": "Public JSON API", "description": "Confirmed via browser Network tab: a clean Express-backed REST API under /api/sitdeck/. The primary data-sources endpoint is confirmed; sibling endpoints use the same URL pattern seen in the Network tab and should be verified individually.",
+        "endpoints": {
+            "Data sources": "https://sitdeck.com/api/sitdeck/data-sources",
+            "Widgets (unverified path)": "https://sitdeck.com/api/sitdeck/widgets",
+            "Map types (unverified path)": "https://sitdeck.com/api/sitdeck/map-types",
+            "Customer count (unverified path)": "https://sitdeck.com/api/sitdeck/customer-count",
+            "Active (unverified path)": "https://sitdeck.com/api/sitdeck/active",
+            "Content (unverified path)": "https://sitdeck.com/api/sitdeck/content"
+        }, "refresh": "Poll periodically"
+    },
     "World Watch": {
         "url": "https://worldwatch.uk/", "icon": "◉", "category": "WORLD INTELLIGENCE",
         "kind": "Public JSON API", "description": "World Watch serves several of its map data layers as plain static JSON files. Confirmed via browser Network tab: missiles_with_coords.json returns live JSON directly (no auth, no API key).",
@@ -320,6 +338,19 @@ def geo_points_from_results():
         rows = records_from(result["data"])
         for row in rows:
             if not isinstance(row, dict):
+                continue
+            # GeoJSON Feature objects (e.g. USGS earthquakes): geometry.coordinates = [lon, lat, depth]
+            geometry = row.get("geometry")
+            if isinstance(geometry, dict) and isinstance(geometry.get("coordinates"), list) and len(geometry["coordinates"]) >= 2:
+                lon_g, lat_g = geometry["coordinates"][0], geometry["coordinates"][1]
+                props = row.get("properties", {}) if isinstance(row.get("properties"), dict) else {}
+                try:
+                    lat_f, lon_f = float(lat_g), float(lon_g)
+                except (TypeError, ValueError):
+                    continue
+                if -90 <= lat_f <= 90 and -180 <= lon_f <= 180:
+                    label = str(props.get("place") or props.get("title") or endpoint)
+                    points.append({"Source": site, "Feed": endpoint, "Label": label, "lat": lat_f, "lon": lon_f})
                 continue
             flat = pd.json_normalize(row).iloc[0].to_dict() if any(isinstance(v, dict) for v in row.values()) else row
             lat = lon = None
