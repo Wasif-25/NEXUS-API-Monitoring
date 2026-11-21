@@ -104,85 +104,117 @@ for key, value in {
         st.session_state[key] = value
 
 # ----------------------------- STYLE -----------------------------
-st.markdown("""
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = True
+
+THEMES = {
+    "dark": dict(bg="#07060f", line="rgba(190,170,255,.16)", ink="#f3eefc",
+                 cardA="#19142e", cardB="#120f22", cardA2="rgba(25,20,46,.98)", cardB2="rgba(16,13,30,.98)",
+                 heroA="rgba(26,18,48,.96)", heroB="rgba(22,16,42,.96)", heroC="rgba(32,20,46,.96)",
+                 sidebarA="#0d0b1c", sidebarB="#0a0815", sidebarText="#e7defa",
+                 textStrong="#f2f7ff", textMuted="#b3a8cf", textFaint="#a399c4",
+                 inputBg="#171226", expanderBg="rgba(22,18,40,.7)",
+                 pageheroA="rgba(28,19,50,.9)", pageheroB="rgba(20,15,36,.9)", gridLine="rgba(170,150,255,.05)"),
+    "light": dict(bg="#f5f2fb", line="rgba(120,90,200,.2)", ink="#201a38",
+                  cardA="#ffffff", cardB="#f2edfa", cardA2="rgba(255,255,255,.97)", cardB2="rgba(241,236,250,.92)",
+                  heroA="rgba(236,228,253,.96)", heroB="rgba(248,231,245,.94)", heroC="rgba(227,246,244,.92)",
+                  sidebarA="#ffffff", sidebarB="#efe9fa", sidebarText="#271f42",
+                  textStrong="#201a38", textMuted="#5c5578", textFaint="#786f96",
+                  inputBg="#ffffff", expanderBg="rgba(255,255,255,.85)",
+                  pageheroA="rgba(239,231,253,.96)", pageheroB="rgba(248,236,247,.92)", gridLine="rgba(120,90,200,.07)")
+}
+_t = THEMES["dark" if st.session_state.dark_mode else "light"]
+CHART_FONT = "#f3eefc" if st.session_state.dark_mode else "#201a38"
+CHART_TEMPLATE = "plotly_dark" if st.session_state.dark_mode else "plotly_white"
+MAP_LAND = "#1c1733" if st.session_state.dark_mode else "#e4def4"
+MAP_OCEAN = "#0d0b1c" if st.session_state.dark_mode else "#f5f2fb"
+MAP_COUNTRY = "#3a3159" if st.session_state.dark_mode else "#b9a9e0"
+
+st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
-:root{--bg:#07060f;--panel:#120f22;--panel2:#16132b;--line:rgba(190,170,255,.16);--muted:#9c94b8;--ink:#f3eefc;--cyan:#2dd4bf;--blue:#8b7bff;--violet:#a78bfa;--magenta:#f472b6;--green:#4ade8a;--amber:#f4c56a}
-html,body,[class*="css"]{font-family:'Manrope',sans-serif}
-.stApp{background:radial-gradient(ellipse at 78% -10%,rgba(167,139,250,.22),transparent 40%),radial-gradient(ellipse at 0% 20%,rgba(244,114,182,.14),transparent 34%),radial-gradient(ellipse at 60% 100%,rgba(45,212,191,.12),transparent 38%),var(--bg);color:var(--ink)}
-[data-testid="stHeader"]{background:transparent}[data-testid="stSidebar"]{background:linear-gradient(185deg,#0d0b1c,#0a0815);border-right:1px solid var(--line)}[data-testid="stSidebar"] *{color:#e7defa}
-.block-container{max-width:1540px;padding-top:1.2rem;padding-bottom:3rem}
-h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif!important;color:var(--ink)!important;letter-spacing:-.035em}
-p,label,.stCaption{color:#b3a8cf}
-@keyframes gradientShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-.grad-text{background:linear-gradient(100deg,var(--violet),var(--magenta) 45%,var(--cyan) 85%,var(--violet));background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:gradientShift 6s ease-in-out infinite}
-@keyframes rise{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
-@keyframes glow{0%,100%{box-shadow:0 0 0 rgba(101,217,232,0)}50%{box-shadow:0 0 26px rgba(101,217,232,.09)}}
-@keyframes scanline{0%{transform:translateY(-110%)}100%{transform:translateY(110%)}}
-.nx-top{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:6px 2px 18px;border-bottom:1px solid var(--line);margin-bottom:22px;animation:rise .55s ease both}
-.nx-brand{font:700 16px 'Space Grotesk';letter-spacing:.16em;color:#f2f7ff}.nx-brand span{color:var(--magenta)}
-.nx-status{font:500 10px 'DM Mono';letter-spacing:.14em;color:#b3a8cf;text-transform:uppercase}
-.hero{position:relative;overflow:hidden;border:1px solid rgba(167,139,250,.3);border-radius:20px;padding:28px 30px;background:linear-gradient(115deg,rgba(26,18,48,.96),rgba(22,16,42,.96) 58%,rgba(32,20,46,.96));animation:rise .6s ease both,glow 7s ease-in-out infinite;margin-bottom:20px}
-.hero:after{content:'';position:absolute;top:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--violet),var(--magenta),transparent);opacity:.9}
-.kicker{font:500 10px 'DM Mono';letter-spacing:.2em;color:var(--magenta);text-transform:uppercase}.hero h1{font-size:clamp(28px,4vw,43px);margin:10px 0 5px;font-weight:700}.hero p{font-size:13px;color:#c2b8dc;margin:0;max-width:680px}
-.metric-card{background:linear-gradient(145deg,#19142e,#120f22);border:1px solid var(--line);border-radius:15px;padding:15px 17px;animation:rise .55s ease both}
-[data-testid="stMetric"]{background:linear-gradient(145deg,#19142e,#120f22);border:1px solid var(--line);border-radius:15px;padding:13px 16px;min-height:105px}
-[data-testid="stMetricLabel"]{color:#b3a8cf!important;font:500 10px 'DM Mono';letter-spacing:.1em}[data-testid="stMetricValue"]{color:#f2f7ff!important;font-family:'Space Grotesk'}
-.section-kicker{font:500 10px 'DM Mono';letter-spacing:.18em;color:#a399c4;text-transform:uppercase;margin:10px 0 8px}
-.source-card{background:linear-gradient(145deg,rgba(25,20,46,.98),rgba(16,13,30,.98));border:1px solid var(--line);border-radius:16px;padding:17px 18px;min-height:148px;animation:rise .5s ease both;transition:all .22s ease;backdrop-filter:blur(6px)}
-.source-card:hover{border-color:rgba(167,139,250,.55);transform:translateY(-3px);box-shadow:0 14px 32px rgba(0,0,0,.3),0 0 0 1px rgba(244,114,182,.15)}
-.source-icon{font:500 20px 'Space Grotesk';color:var(--magenta);margin-bottom:10px}.source-name{font:600 16px 'Space Grotesk';color:#eff6ff}.source-meta{font:500 9px 'DM Mono';letter-spacing:.13em;color:#a498c2;margin-top:5px}.source-desc{font-size:11px;color:#b0a6cc;margin-top:9px;line-height:1.5}
-.source-banner{border:1px solid rgba(167,139,250,.28);background:linear-gradient(100deg,rgba(32,22,54,.8),rgba(24,17,40,.85));border-radius:16px;padding:17px 20px;margin:10px 0 16px}
-.source-banner-title{font:600 18px 'Space Grotesk';color:#f1f7ff}.source-banner-sub{font:500 10px 'DM Mono';color:var(--cyan);letter-spacing:.13em;margin-top:4px}
-.source-label{font:500 10px 'DM Mono';color:#a399c4;letter-spacing:.12em;text-transform:uppercase}
-div.stButton>button,div.stDownloadButton>button{border:1px solid rgba(167,139,250,.35);border-radius:10px;background:linear-gradient(105deg,#4c2d7a,#7a3570);color:#f8f0ff;font-weight:700;min-height:40px;transition:all .2s}
-div.stButton>button:hover,div.stDownloadButton>button:hover{border-color:var(--magenta);transform:translateY(-2px);box-shadow:0 8px 24px rgba(167,80,200,.3);color:white}
-[data-testid="stDataFrame"]{border:1px solid var(--line);border-radius:12px;overflow:hidden}
-div[data-testid="stExpander"]{border:1px solid var(--line);border-radius:12px;background:rgba(22,18,40,.7)}
-[data-baseweb="select"]>div,[data-testid="stTextInput"] input{background:#171226;border-color:var(--line);color:#f3eefc}
-hr{border-color:var(--line)}footer,#MainMenu{visibility:hidden}
+:root{{--bg:{_t['bg']};--line:{_t['line']};--ink:{_t['ink']};--cyan:#2dd4bf;--blue:#8b7bff;--violet:#a78bfa;--magenta:#f472b6;--green:#4ade8a;--amber:#f4c56a;
+--cardA:{_t['cardA']};--cardB:{_t['cardB']};--cardA2:{_t['cardA2']};--cardB2:{_t['cardB2']};
+--heroA:{_t['heroA']};--heroB:{_t['heroB']};--heroC:{_t['heroC']};
+--sidebarA:{_t['sidebarA']};--sidebarB:{_t['sidebarB']};--sidebarText:{_t['sidebarText']};
+--textStrong:{_t['textStrong']};--textMuted:{_t['textMuted']};--textFaint:{_t['textFaint']};
+--inputBg:{_t['inputBg']};--expanderBg:{_t['expanderBg']};
+--pageheroA:{_t['pageheroA']};--pageheroB:{_t['pageheroB']};--gridLine:{_t['gridLine']}}}
+html,body,[class*="css"]{{font-family:'Manrope',sans-serif}}
+.stApp{{background:radial-gradient(ellipse at 78% -10%,rgba(167,139,250,.22),transparent 40%),radial-gradient(ellipse at 0% 20%,rgba(244,114,182,.14),transparent 34%),radial-gradient(ellipse at 60% 100%,rgba(45,212,191,.12),transparent 38%),var(--bg);color:var(--ink)}}
+[data-testid="stHeader"]{{background:transparent}}[data-testid="stSidebar"]{{background:linear-gradient(185deg,var(--sidebarA),var(--sidebarB));border-right:1px solid var(--line)}}[data-testid="stSidebar"] *{{color:var(--sidebarText)}}
+.block-container{{max-width:1540px;padding-top:1.2rem;padding-bottom:3rem}}
+h1,h2,h3,h4{{font-family:'Space Grotesk',sans-serif!important;color:var(--ink)!important;letter-spacing:-.035em}}
+p,label,.stCaption{{color:var(--textMuted)}}
+@keyframes gradientShift{{0%,100%{{background-position:0% 50%}}50%{{background-position:100% 50%}}}}
+.grad-text{{background:linear-gradient(100deg,var(--violet),var(--magenta) 45%,var(--cyan) 85%,var(--violet));background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:gradientShift 6s ease-in-out infinite}}
+@keyframes rise{{from{{opacity:0;transform:translateY(13px)}}to{{opacity:1;transform:translateY(0)}}}}
+@keyframes glow{{0%,100%{{box-shadow:0 0 0 rgba(101,217,232,0)}}50%{{box-shadow:0 0 26px rgba(101,217,232,.09)}}}}
+@keyframes scanline{{0%{{transform:translateY(-110%)}}100%{{transform:translateY(110%)}}}}
+.nx-top{{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:6px 2px 18px;border-bottom:1px solid var(--line);margin-bottom:22px;animation:rise .55s ease both}}
+.nx-brand{{font:700 16px 'Space Grotesk';letter-spacing:.16em;color:var(--textStrong)}}.nx-brand span{{color:var(--magenta)}}
+.nx-status{{font:500 10px 'DM Mono';letter-spacing:.14em;color:var(--textMuted);text-transform:uppercase}}
+.hero{{position:relative;overflow:hidden;border:1px solid rgba(167,139,250,.3);border-radius:20px;padding:28px 30px;background:linear-gradient(115deg,var(--heroA),var(--heroB) 58%,var(--heroC));animation:rise .6s ease both,glow 7s ease-in-out infinite;margin-bottom:20px}}
+.hero:after{{content:'';position:absolute;top:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--violet),var(--magenta),transparent);opacity:.9}}
+.kicker{{font:500 10px 'DM Mono';letter-spacing:.2em;color:var(--magenta);text-transform:uppercase}}.hero h1{{font-size:clamp(28px,4vw,43px);margin:10px 0 5px;font-weight:700}}.hero p{{font-size:13px;color:var(--textMuted);margin:0;max-width:680px}}
+.metric-card{{background:linear-gradient(145deg,var(--cardA),var(--cardB));border:1px solid var(--line);border-radius:15px;padding:15px 17px;animation:rise .55s ease both}}
+[data-testid="stMetric"]{{background:linear-gradient(145deg,var(--cardA),var(--cardB));border:1px solid var(--line);border-radius:15px;padding:13px 16px;min-height:105px}}
+[data-testid="stMetricLabel"]{{color:var(--textMuted)!important;font:500 10px 'DM Mono';letter-spacing:.1em}}[data-testid="stMetricValue"]{{color:var(--textStrong)!important;font-family:'Space Grotesk'}}
+.section-kicker{{font:500 10px 'DM Mono';letter-spacing:.18em;color:var(--textFaint);text-transform:uppercase;margin:10px 0 8px}}
+.source-card{{background:linear-gradient(145deg,var(--cardA2),var(--cardB2));border:1px solid var(--line);border-radius:16px;padding:17px 18px;min-height:148px;animation:rise .5s ease both;transition:all .22s ease;backdrop-filter:blur(6px)}}
+.source-card:hover{{border-color:rgba(167,139,250,.55);transform:translateY(-3px);box-shadow:0 14px 32px rgba(0,0,0,.18),0 0 0 1px rgba(244,114,182,.15)}}
+.source-icon{{font:500 20px 'Space Grotesk';color:var(--magenta);margin-bottom:10px}}.source-name{{font:600 16px 'Space Grotesk';color:var(--textStrong)}}.source-meta{{font:500 9px 'DM Mono';letter-spacing:.13em;color:var(--textFaint);margin-top:5px}}.source-desc{{font-size:11px;color:var(--textFaint);margin-top:9px;line-height:1.5}}
+.source-banner{{border:1px solid rgba(167,139,250,.28);background:linear-gradient(100deg,var(--pageheroA),var(--pageheroB));border-radius:16px;padding:17px 20px;margin:10px 0 16px}}
+.source-banner-title{{font:600 18px 'Space Grotesk';color:var(--textStrong)}}.source-banner-sub{{font:500 10px 'DM Mono';color:var(--cyan);letter-spacing:.13em;margin-top:4px}}
+.source-label{{font:500 10px 'DM Mono';color:var(--textFaint);letter-spacing:.12em;text-transform:uppercase}}
+div.stButton>button,div.stDownloadButton>button{{border:1px solid rgba(167,139,250,.35);border-radius:10px;background:linear-gradient(105deg,#4c2d7a,#7a3570);color:#f8f0ff;font-weight:700;min-height:40px;transition:all .2s}}
+div.stButton>button:hover,div.stDownloadButton>button:hover{{border-color:var(--magenta);transform:translateY(-2px);box-shadow:0 8px 24px rgba(167,80,200,.3);color:white}}
+[data-testid="stDataFrame"]{{border:1px solid var(--line);border-radius:12px;overflow:hidden}}
+div[data-testid="stExpander"]{{border:1px solid var(--line);border-radius:12px;background:var(--expanderBg)}}
+[data-baseweb="select"]>div,[data-testid="stTextInput"] input{{background:var(--inputBg);border-color:var(--line);color:var(--ink)}}
+hr{{border-color:var(--line)}}footer,#MainMenu{{visibility:hidden}}
 
 /* ================= NEXT-LEVEL ANIMATION LAYER ================= */
-@keyframes drift{0%{background-position:0 0,0 0}100%{background-position:120px 120px,-90px 70px}}
-@keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(98,214,165,.55)}50%{box-shadow:0 0 0 7px rgba(98,214,165,0)}}
-@keyframes pulseRed{0%,100%{box-shadow:0 0 0 0 rgba(240,110,110,.55)}50%{box-shadow:0 0 0 7px rgba(240,110,110,0)}}
-@keyframes pulseAmber{0%,100%{box-shadow:0 0 0 0 rgba(244,197,106,.55)}50%{box-shadow:0 0 0 7px rgba(244,197,106,0)}}
-@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
-@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-@keyframes sweep{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fadeScale{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
-.stApp{background-image:radial-gradient(ellipse at 78% -10%,rgba(167,139,250,.22),transparent 40%),radial-gradient(ellipse at 0% 20%,rgba(244,114,182,.14),transparent 34%),radial-gradient(ellipse at 60% 100%,rgba(45,212,191,.12),transparent 38%),linear-gradient(rgba(170,150,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(170,150,255,.05) 1px,transparent 1px),var(--bg);background-size:auto,auto,auto,42px 42px,42px 42px;animation:drift 14s linear infinite}
-.hero{isolation:isolate}
-.hero:before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,transparent,rgba(167,139,250,.12),rgba(244,114,182,.1),transparent);width:60%;animation:sweep 6s ease-in-out infinite}
-.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:7px;animation:pulseDot 1.8s ease-in-out infinite;vertical-align:middle}
-.badge{display:inline-flex;align-items:center;gap:6px;font:600 10px 'DM Mono';letter-spacing:.09em;padding:4px 10px;border-radius:999px;text-transform:uppercase;animation:fadeScale .4s ease both}
-.badge-dot{width:7px;height:7px;border-radius:50%}
-.badge-online{background:rgba(98,214,165,.12);color:var(--green);border:1px solid rgba(98,214,165,.35)}
-.badge-online .badge-dot{background:var(--green);animation:pulseDot 1.8s ease-in-out infinite}
-.badge-offline{background:rgba(240,110,110,.12);color:#f3a0a0;border:1px solid rgba(240,110,110,.35)}
-.badge-offline .badge-dot{background:#f06e6e;animation:pulseRed 1.8s ease-in-out infinite}
-.badge-warn{background:rgba(244,197,106,.12);color:var(--amber);border:1px solid rgba(244,197,106,.35)}
-.badge-warn .badge-dot{background:var(--amber);animation:pulseAmber 1.8s ease-in-out infinite}
-.badge-idle{background:rgba(160,185,215,.1);color:#9fb2c6;border:1px solid var(--line)}
-.source-card{position:relative}
-.source-card:before{content:'';position:absolute;top:0;left:14px;right:14px;height:1px;background:linear-gradient(90deg,transparent,var(--magenta),transparent);opacity:0;transition:opacity .25s}
-.source-card:hover:before{opacity:1}
-.source-card:hover .source-icon{animation:floaty 1.4s ease-in-out infinite}
-[data-testid="stMetric"]{position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s}
-[data-testid="stMetric"]:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.3),0 0 0 1px rgba(167,139,250,.3)}
-.nx-counter-wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:4px 0 6px}
-.nx-counter{background:linear-gradient(145deg,#19142e,#120f22);border:1px solid var(--line);border-radius:15px;padding:16px 18px;animation:rise .55s ease both;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s}
-.nx-counter:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.3),0 0 0 1px rgba(167,139,250,.3)}
-.nx-counter-label{color:#b3a8cf;font:600 10px 'DM Mono';letter-spacing:.1em;text-transform:uppercase}
-.nx-counter-value{color:#f2f7ff;font:700 32px 'Space Grotesk';margin-top:6px}
-.nx-spark{position:absolute;right:14px;top:16px;width:9px;height:9px;border-radius:50%;animation:pulseDot 2s ease-in-out infinite}
-.nx-loading-bar{height:2px;width:100%;background:linear-gradient(90deg,transparent,var(--violet),var(--magenta),transparent);background-size:400px 100%;animation:shimmer 1.3s linear infinite;border-radius:2px;margin:2px 0 14px}
-.nx-ring{width:14px;height:14px;border-radius:50%;border:2px solid rgba(167,139,250,.25);border-top-color:var(--magenta);display:inline-block;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
-.nx-pagehero{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:18px;padding:18px 22px;margin-bottom:18px;background:linear-gradient(110deg,rgba(28,19,50,.9),rgba(20,15,36,.9));animation:rise .5s ease both}
-.nx-pagehero h2{margin:2px 0 4px!important}
-.nx-chip{display:inline-flex;align-items:center;gap:6px;font:600 10px 'DM Mono';letter-spacing:.08em;padding:4px 11px;border-radius:999px;background:rgba(167,139,250,.14);color:var(--violet);border:1px solid rgba(167,139,250,.35);margin-right:6px}
-.nx-gauge-wrap{display:flex;justify-content:center}
+@keyframes drift{{0%{{background-position:0 0,0 0}}100%{{background-position:120px 120px,-90px 70px}}}}
+@keyframes pulseDot{{0%,100%{{box-shadow:0 0 0 0 rgba(98,214,165,.55)}}50%{{box-shadow:0 0 0 7px rgba(98,214,165,0)}}}}
+@keyframes pulseRed{{0%,100%{{box-shadow:0 0 0 0 rgba(240,110,110,.55)}}50%{{box-shadow:0 0 0 7px rgba(240,110,110,0)}}}}
+@keyframes pulseAmber{{0%,100%{{box-shadow:0 0 0 0 rgba(244,197,106,.55)}}50%{{box-shadow:0 0 0 7px rgba(244,197,106,0)}}}}
+@keyframes shimmer{{0%{{background-position:-400px 0}}100%{{background-position:400px 0}}}}
+@keyframes floaty{{0%,100%{{transform:translateY(0)}}50%{{transform:translateY(-5px)}}}}
+@keyframes sweep{{0%{{transform:translateX(-120%)}}100%{{transform:translateX(220%)}}}}
+@keyframes spin{{to{{transform:rotate(360deg)}}}}
+@keyframes fadeScale{{from{{opacity:0;transform:scale(.96)}}to{{opacity:1;transform:scale(1)}}}}
+.stApp{{background-image:radial-gradient(ellipse at 78% -10%,rgba(167,139,250,.22),transparent 40%),radial-gradient(ellipse at 0% 20%,rgba(244,114,182,.14),transparent 34%),radial-gradient(ellipse at 60% 100%,rgba(45,212,191,.12),transparent 38%),linear-gradient(rgba(170,150,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(170,150,255,.05) 1px,transparent 1px),var(--bg);background-size:auto,auto,auto,42px 42px,42px 42px;animation:drift 14s linear infinite}}
+.hero{{isolation:isolate}}
+.hero:before{{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,transparent,rgba(167,139,250,.12),rgba(244,114,182,.1),transparent);width:60%;animation:sweep 6s ease-in-out infinite}}
+.live-dot{{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:7px;animation:pulseDot 1.8s ease-in-out infinite;vertical-align:middle}}
+.badge{{display:inline-flex;align-items:center;gap:6px;font:600 10px 'DM Mono';letter-spacing:.09em;padding:4px 10px;border-radius:999px;text-transform:uppercase;animation:fadeScale .4s ease both}}
+.badge-dot{{width:7px;height:7px;border-radius:50%}}
+.badge-online{{background:rgba(98,214,165,.12);color:var(--green);border:1px solid rgba(98,214,165,.35)}}
+.badge-online .badge-dot{{background:var(--green);animation:pulseDot 1.8s ease-in-out infinite}}
+.badge-offline{{background:rgba(240,110,110,.12);color:#f3a0a0;border:1px solid rgba(240,110,110,.35)}}
+.badge-offline .badge-dot{{background:#f06e6e;animation:pulseRed 1.8s ease-in-out infinite}}
+.badge-warn{{background:rgba(244,197,106,.12);color:var(--amber);border:1px solid rgba(244,197,106,.35)}}
+.badge-warn .badge-dot{{background:var(--amber);animation:pulseAmber 1.8s ease-in-out infinite}}
+.badge-idle{{background:rgba(160,185,215,.1);color:var(--textFaint);border:1px solid var(--line)}}
+.source-card{{position:relative}}
+.source-card:before{{content:'';position:absolute;top:0;left:14px;right:14px;height:1px;background:linear-gradient(90deg,transparent,var(--magenta),transparent);opacity:0;transition:opacity .25s}}
+.source-card:hover:before{{opacity:1}}
+.source-card:hover .source-icon{{animation:floaty 1.4s ease-in-out infinite}}
+[data-testid="stMetric"]{{position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s}}
+[data-testid="stMetric"]:hover{{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.3),0 0 0 1px rgba(167,139,250,.3)}}
+.nx-counter-wrap{{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:4px 0 6px}}
+.nx-counter{{background:linear-gradient(145deg,#19142e,#120f22);border:1px solid var(--line);border-radius:15px;padding:16px 18px;animation:rise .55s ease both;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s}}
+.nx-counter:hover{{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.3),0 0 0 1px rgba(167,139,250,.3)}}
+.nx-counter-label{{color:var(--textMuted);font:600 10px 'DM Mono';letter-spacing:.1em;text-transform:uppercase}}
+.nx-counter-value{{color:var(--textStrong);font:700 32px 'Space Grotesk';margin-top:6px}}
+.nx-spark{{position:absolute;right:14px;top:16px;width:9px;height:9px;border-radius:50%;animation:pulseDot 2s ease-in-out infinite}}
+.nx-loading-bar{{height:2px;width:100%;background:linear-gradient(90deg,transparent,var(--violet),var(--magenta),transparent);background-size:400px 100%;animation:shimmer 1.3s linear infinite;border-radius:2px;margin:2px 0 14px}}
+.nx-ring{{width:14px;height:14px;border-radius:50%;border:2px solid rgba(167,139,250,.25);border-top-color:var(--magenta);display:inline-block;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}}
+.nx-pagehero{{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:18px;padding:18px 22px;margin-bottom:18px;background:linear-gradient(110deg,var(--pageheroA),var(--pageheroB));animation:rise .5s ease both}}
+.nx-pagehero h2{{margin:2px 0 4px!important}}
+.nx-chip{{display:inline-flex;align-items:center;gap:6px;font:600 10px 'DM Mono';letter-spacing:.08em;padding:4px 11px;border-radius:999px;background:rgba(167,139,250,.14);color:var(--violet);border:1px solid rgba(167,139,250,.35);margin-right:6px}}
+.nx-gauge-wrap{{display:flex;justify-content:center}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -505,6 +537,20 @@ def generate_insights():
 # ----------------------------- SIDEBAR -----------------------------
 with st.sidebar:
     st.markdown("<div style='padding:8px 0 14px'><div class='nx-brand' style='font-size:24px'>◈ NEXUS<span>.</span></div><div class='nx-status'>INTELLIGENCE WORKSPACE / 05</div></div>", unsafe_allow_html=True)
+    dc, fc = st.columns(2)
+    with dc:
+        st.toggle("🌙 Dark", key="dark_mode", help="Switch between dark and light theme")
+    with fc:
+        st.components.v1.html(
+            """<button onclick="(function(){try{var d=window.parent.document;var el=d.documentElement;
+            var isFs=d.fullscreenElement||d.webkitFullscreenElement;
+            if(!isFs){(el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen).call(el);}
+            else{(d.exitFullscreen||d.webkitExitFullscreen||d.msExitFullscreen).call(d);}}catch(e){}})()"
+            style="width:100%;padding:8px 6px;border-radius:10px;border:1px solid rgba(167,139,250,.35);
+            background:linear-gradient(105deg,#4c2d7a,#7a3570);color:#f8f0ff;font:700 12px Manrope,sans-serif;
+            cursor:pointer;margin-top:2px">⛶ Fullscreen</button>""",
+            height=42
+        )
     st.divider()
     page = st.radio("NAVIGATION", ["Overview", "Network Graph", "Source Explorer", "Data Explorer", "Global Map", "Global Search", "Monitor All", "Analytics", "Settings"], label_visibility="visible")
     st.divider()
@@ -559,21 +605,21 @@ if page == "Overview":
             },
             title={"text": "WORKSPACE HEALTH", "font": {"size": 12, "color": "#b3a8cf"}}
         ))
-        gauge.update_layout(height=220, margin=dict(l=20, r=20, t=40, b=10), paper_bgcolor="rgba(0,0,0,0)", font_color="#f3eefc")
+        gauge.update_layout(height=220, margin=dict(l=20, r=20, t=40, b=10), paper_bgcolor="rgba(0,0,0,0)", font_color=CHART_FONT)
         st.plotly_chart(gauge, use_container_width=True)
     with mcol:
         geo_df = geo_points_from_results()
         st.markdown(f"<div class='nx-chip'>◉ {len(geo_df)} GEO-TAGGED RECORDS FOUND</div><div class='nx-chip'>Open <b>Global Map</b> to plot them</div>", unsafe_allow_html=True)
         if not geo_df.empty:
             mini = px.scatter_geo(geo_df, lat="lat", lon="lon", color="Source", projection="orthographic")
-            mini.update_layout(height=200, margin=dict(l=0, r=0, t=10, b=0), paper_bgcolor="rgba(0,0,0,0)", font_color="#f3eefc",
-                                geo=dict(bgcolor="rgba(0,0,0,0)", landcolor="#1c1733", showocean=True, oceancolor="#0d0b1c", showcountries=True, countrycolor="#3a3159"))
+            mini.update_layout(height=200, margin=dict(l=0, r=0, t=10, b=0), paper_bgcolor="rgba(0,0,0,0)", font_color=CHART_FONT,
+                                geo=dict(bgcolor="rgba(0,0,0,0)", landcolor=MAP_LAND, showocean=True, oceancolor=MAP_OCEAN, showcountries=True, countrycolor=MAP_COUNTRY))
             st.plotly_chart(mini, use_container_width=True)
         else:
             st.info("No geo-tagged records yet — fetch World Watch's missile feed or another geo-tagged source first.")
     st.markdown("<div class='section-kicker'>⚡ INTELLIGENCE SIGNALS — AUTO-GENERATED FROM LOADED DATA</div>", unsafe_allow_html=True)
     for icon, owner, text in generate_insights():
-        st.markdown(f"<div class='source-banner' style='padding:13px 18px;margin:8px 0'><span style='font-size:16px;margin-right:10px'>{icon}</span><b style='color:#f1f7ff'>{owner}</b> &nbsp;·&nbsp; <span style='color:#cfc6ea;font-size:13px'>{text}</span></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='source-banner' style='padding:13px 18px;margin:8px 0'><span style='font-size:16px;margin-right:10px'>{icon}</span><b style='color:var(--textStrong)'>{owner}</b> &nbsp;·&nbsp; <span style='color:var(--textMuted);font-size:13px'>{text}</span></div>", unsafe_allow_html=True)
     st.markdown("<div class='section-kicker'>02 / SELECT A WEBSITE</div>", unsafe_allow_html=True)
     cols = st.columns(2)
     for i, (site, cfg) in enumerate(SOURCES.items()):
@@ -593,7 +639,7 @@ if page == "Overview":
 
 # ----------------------------- NETWORK GRAPH -----------------------------
 elif page == "Network Graph":
-    st.markdown("<div class='nx-pagehero'><div class='kicker'>⟁ LIVE TOPOLOGY</div><h2 class='grad-text'>Network Graph</h2><p style='color:#b3a8cf;font-size:12px;margin:0'>Every configured source, radiating from NEXUS, color-coded by its most recent check — green pulses mean online, red means offline/error, amber means a website-only response, grey means not checked yet.</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='nx-pagehero'><div class='kicker'>⟁ LIVE TOPOLOGY</div><h2 class='grad-text'>Network Graph</h2><p style='color:var(--textMuted);font-size:12px;margin:0'>Every configured source, radiating from NEXUS, color-coded by its most recent check — green pulses mean online, red means offline/error, amber means a website-only response, grey means not checked yet.</p></div>", unsafe_allow_html=True)
     network_graph()
     legend_cols = st.columns(4)
     legend_cols[0].markdown(status_badge("Online"), unsafe_allow_html=True)
@@ -690,7 +736,7 @@ elif page == "Data Explorer":
 
 # ----------------------------- GLOBAL MAP -----------------------------
 elif page == "Global Map":
-    st.markdown("<div class='nx-pagehero'><div class='kicker'>◉ WORLD VIEW</div><h2 class='grad-text'>Global Map</h2><p style='color:#b3a8cf;font-size:12px;margin:0'>Every geo-tagged record across every fetched source, plotted together — coordinates are auto-detected from each feed's JSON (lat/lon, latitude/longitude, lat/lng, etc.).</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='nx-pagehero'><div class='kicker'>◉ WORLD VIEW</div><h2 class='grad-text'>Global Map</h2><p style='color:var(--textMuted);font-size:12px;margin:0'>Every geo-tagged record across every fetched source, plotted together — coordinates are auto-detected from each feed's JSON (lat/lon, latitude/longitude, lat/lng, etc.).</p></div>", unsafe_allow_html=True)
     geo_df = geo_points_from_results()
     if geo_df.empty:
         st.info("No geo-tagged records loaded yet. Go to Source Explorer and fetch World Watch's 'Missiles (with coordinates)' feed — it's the richest geo source currently configured — then come back here.")
@@ -705,10 +751,10 @@ elif page == "Global Map":
         )
         fig.update_traces(marker=dict(size=10, line=dict(width=1, color="#0d0b1c"), opacity=0.9))
         fig.update_layout(
-            height=560, margin=dict(l=0, r=0, t=10, b=0), paper_bgcolor="rgba(0,0,0,0)", font_color="#f3eefc",
+            height=560, margin=dict(l=0, r=0, t=10, b=0), paper_bgcolor="rgba(0,0,0,0)", font_color=CHART_FONT,
             legend=dict(bgcolor="rgba(0,0,0,0)"),
-            geo=dict(bgcolor="rgba(0,0,0,0)", landcolor="#1c1733", showocean=True, oceancolor="#0d0b1c",
-                      showcountries=True, countrycolor="#3a3159", showcoastlines=True, coastlinecolor="#4b4080")
+            geo=dict(bgcolor="rgba(0,0,0,0)", landcolor=MAP_LAND, showocean=True, oceancolor=MAP_OCEAN,
+                      showcountries=True, countrycolor=MAP_COUNTRY, showcoastlines=True, coastlinecolor=MAP_COUNTRY)
         )
         st.plotly_chart(fig, use_container_width=True)
         st.dataframe(shown, use_container_width=True, hide_index=True, height=260)
@@ -716,7 +762,7 @@ elif page == "Global Map":
 
 # ----------------------------- GLOBAL SEARCH -----------------------------
 elif page == "Global Search":
-    st.markdown("<div class='nx-pagehero'><div class='kicker'>⌕ CROSS-SOURCE SEARCH</div><h2 class='grad-text'>Global Search</h2><p style='color:#b3a8cf;font-size:12px;margin:0'>Search every loaded JSON dataset from every website at once — each row still shows exactly which source and feed it came from.</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='nx-pagehero'><div class='kicker'>⌕ CROSS-SOURCE SEARCH</div><h2 class='grad-text'>Global Search</h2><p style='color:var(--textMuted);font-size:12px;margin:0'>Search every loaded JSON dataset from every website at once — each row still shows exactly which source and feed it came from.</p></div>", unsafe_allow_html=True)
     query = st.text_input("Search across all loaded sources", placeholder="e.g. a coin symbol, a vessel name, a country, a status...")
     combined = global_search(query)
     if combined.empty and query:
@@ -766,12 +812,12 @@ elif page == "Analytics":
         one, two = st.columns(2)
         with one:
             fig = px.bar(hist, x="Website", y="Response time (ms)", color="Status", hover_data=["Endpoint", "Checked"], title="Response time by website")
-            fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#b8c8d9")
+            fig.update_layout(template=CHART_TEMPLATE, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color=CHART_FONT)
             st.plotly_chart(fig, use_container_width=True)
         with two:
             counts = hist.groupby(["Website", "Status"]).size().reset_index(name="Checks")
             fig = px.bar(counts, x="Website", y="Checks", color="Status", barmode="group", title="Checks by website and status")
-            fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#b8c8d9")
+            fig.update_layout(template=CHART_TEMPLATE, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color=CHART_FONT)
             st.plotly_chart(fig, use_container_width=True)
         st.dataframe(hist, use_container_width=True, hide_index=True)
         st.download_button("Export monitoring history", hist.to_csv(index=False).encode("utf-8"), file_name="nexus_monitoring_history.csv", mime="text/csv")
